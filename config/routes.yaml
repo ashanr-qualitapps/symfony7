@@ -1,0 +1,11 @@
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
+
+# Explicitly define the API routes
+api_system:
+    resource: ../src/Controller/Api/
+    type: attribute
+    prefix: /

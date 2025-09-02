@@ -1,0 +1,213 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ product.name }} - Product Details{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    .product-detail-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: 10px;
+    }
+    .product-price {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .stock-badge {
+        font-size: 1rem;
+        padding: 8px 15px;
+    }
+    .stock-low { background-color: #dc3545; }
+    .stock-medium { background-color: #ffc107; color: #000; }
+    .stock-high { background-color: #28a745; }
+    .detail-item {
+        border-bottom: 1px solid #e9ecef;
+        padding: 15px 0;
+    }
+    .detail-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-6 fw-bold mb-2">
+                        <i class="bi bi-box-seam text-primary me-3"></i>{{ product.name }}
+                    </h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{{ path('app_home') }}">Home</a></li>
+                            <li class="breadcrumb-item"><a href="{{ path('app_dashboard') }}">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="{{ path('product_index') }}">Products</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ product.name }}</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Product Details -->
+        <div class="col-md-8">
+            <div class="card product-detail-card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Product Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Product Title and Price -->
+                    <div class="detail-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h3 class="mb-1">{{ product.name }}</h3>
+                                <div class="product-price">${{ product.price }}</div>
+                            </div>
+                            <div>
+                                <span class="badge stock-badge {{ product.stock == 0 ? 'stock-low' : (product.stock <= 10 ? 'stock-medium' : 'stock-high') }}">
+                                    {% if product.stock == 0 %}
+                                        <i class="bi bi-x-circle me-1"></i>Out of Stock
+                                    {% elseif product.stock <= 10 %}
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Low Stock ({{ product.stock }})
+                                    {% else %}
+                                        <i class="bi bi-check-circle me-1"></i>In Stock ({{ product.stock }})
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="detail-item">
+                        <h5 class="mb-3">
+                            <i class="bi bi-file-text me-2"></i>Description
+                        </h5>
+                        <p class="mb-0">
+                            {{ product.description ?: 'No description available for this product.' }}
+                        </p>
+                    </div>
+
+                    <!-- Stock Information -->
+                    <div class="detail-item">
+                        <h5 class="mb-3">
+                            <i class="bi bi-boxes me-2"></i>Inventory Details
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <span>Available Stock:</span>
+                                    <strong>{{ product.stock }} units</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <span>Status:</span>
+                                    <strong>
+                                        {% if product.stock == 0 %}
+                                            <span class="text-danger">Out of Stock</span>
+                                        {% elseif product.stock <= 10 %}
+                                            <span class="text-warning">Low Stock</span>
+                                        {% else %}
+                                            <span class="text-success">In Stock</span>
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timestamps -->
+                    <div class="detail-item">
+                        <h5 class="mb-3">
+                            <i class="bi bi-clock me-2"></i>Product History
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <span>Created:</span>
+                                    <strong>{{ product.createdAt ? product.createdAt|date('M d, Y g:i A') : 'Unknown' }}</strong>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex justify-content-between">
+                                    <span>Last Updated:</span>
+                                    <strong>{{ product.updatedAt ? product.updatedAt|date('M d, Y g:i A') : 'Unknown' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Sidebar -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header bg-secondary text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-gear me-2"></i>Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="{{ path('product_edit', {'id': product.id}) }}" class="btn btn-primary">
+                                <i class="bi bi-pencil me-2"></i>Edit Product
+                            </a>
+                            
+                            <form method="post" action="{{ path('product_delete', {'id': product.id}) }}">
+                                <button type="submit" class="btn btn-danger w-100" onclick="return confirm('Are you sure you want to delete this product? This action cannot be undone.')">
+                                    <i class="bi bi-trash me-2"></i>Delete Product
+                                </button>
+                            </form>
+                            
+                            <hr>
+                        {% endif %}
+                        
+                        <a href="{{ path('product_index') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Back to Products
+                        </a>
+                        
+                        <a href="{{ path('app_dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-speedometer2 me-2"></i>Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="bi bi-graph-up me-2"></i>Quick Stats
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <div class="text-center p-2 bg-light rounded">
+                                <div class="fw-bold">${{ product.price }}</div>
+                                <small class="text-muted">Price</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center p-2 bg-light rounded">
+                                <div class="fw-bold">{{ product.stock }}</div>
+                                <small class="text-muted">Stock</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

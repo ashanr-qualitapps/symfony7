@@ -1,0 +1,174 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Login{% endblock %}
+
+{% block body %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h1 class="text-center">Login</h1>
+                </div>
+                <div class="card-body">
+                    {% if error %}
+                        <div class="alert alert-danger">
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                        </div>
+                    {% endif %}
+
+                    <form action="{{ path('app_login_check') }}" method="post" id="loginForm">
+                        <div class="mb-3">
+                            <label for="inputEmail" class="form-label">Email:</label>
+                            <input type="email" value="{{ last_username }}" name="_username" id="inputEmail" class="form-control" autocomplete="email" required autofocus>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="inputPassword" class="form-label">Password:</label>
+                            <input type="password" name="_password" id="inputPassword" class="form-control" autocomplete="current-password" required>
+                        </div>
+
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" name="_remember_me" id="remember_me" class="form-check-input">
+                            <label for="remember_me" class="form-check-label">Remember me</label>
+                        </div>
+
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                        {# Add a hidden field for the target path #}
+                        <input type="hidden" name="_target_path" value="{{ path('app_dashboard') }}">
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary" id="loginButton">Sign in</button>
+                        </div>
+                        
+                        <div class="mt-3 text-center">
+                            <p>Default credentials:</p>
+                            <p>Admin: admin@example.com / password</p>
+                            <p>User: user@example.com / password</p>
+                        </div>
+                    </form>
+                    
+                    {# Add debug information section #}
+                    {% if debug_mode is defined and debug_mode %}
+                        <div class="mt-5">
+                            <h3>Debug Information</h3>
+                            <div class="alert alert-info">
+                                <p>To check if your login submission is being processed correctly:</p>
+                                <ol>
+                                    <li>Open browser developer tools (F12)</li>
+                                    <li>Go to the Network tab</li>
+                                    <li>Submit the login form and observe the request/response</li>
+                                </ol>
+                            </div>
+                            
+                            {% if debug_info is defined and debug_info %}
+                                <div class="card mt-3">
+                                    <div class="card-header bg-secondary text-white">
+                                        Login Debug Data
+                                    </div>
+                                    <div class="card-body">
+                                        <pre>{{ debug_info|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                <p>If login doesn't work, try submitting directly to the check path:</p>
+                                <form action="{{ path('app_login_check') }}" method="post" class="mt-3">
+                                    <input type="hidden" name="_username" value="admin@example.com">
+                                    <input type="hidden" name="_password" value="password">
+                                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                                    <button type="submit" class="btn btn-secondary">Try Debug Login</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔐 Login page loaded');
+    console.log('📍 Current URL:', window.location.href);
+    console.log('🔧 Login form action:', document.getElementById('loginForm').action);
+    
+    const loginForm = document.getElementById('loginForm');
+    const loginButton = document.getElementById('loginButton');
+    
+    // Add form submission debugging
+    loginForm.addEventListener('submit', function(e) {
+        console.log('🚀 Login form submission started');
+        console.log('📧 Username:', document.getElementById('inputEmail').value);
+        console.log('🔑 Password provided:', document.getElementById('inputPassword').value ? 'Yes' : 'No');
+        console.log('💾 Remember me:', document.getElementById('remember_me').checked ? 'Yes' : 'No');
+        console.log('🛡️ CSRF Token:', document.querySelector('input[name="_csrf_token"]').value);
+        
+        // Disable button to prevent double submission
+        loginButton.disabled = true;
+        loginButton.textContent = 'Signing in...';
+        
+        // Monitor form submission
+        console.log('⏳ Form submitting...');
+        
+        // Re-enable button after 3 seconds in case of issues
+        setTimeout(() => {
+            if (loginButton.disabled) {
+                console.log('⚠️ Re-enabling login button after timeout');
+                loginButton.disabled = false;
+                loginButton.textContent = 'Sign in';
+            }
+        }, 3000);
+    });
+    
+    // Monitor page visibility changes (helps detect redirects)
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            console.log('📱 Page hidden (possible redirect)');
+        } else {
+            console.log('👁️ Page visible again');
+        }
+    });
+    
+    // Monitor beforeunload (page leaving)
+    window.addEventListener('beforeunload', function() {
+        console.log('🚪 Page is being unloaded (navigation/redirect)');
+    });
+    
+    // Check if there are any JavaScript errors
+    window.addEventListener('error', function(e) {
+        console.error('❌ JavaScript error:', e.error);
+    });
+    
+    // Monitor AJAX requests (if any)
+    const originalFetch = window.fetch;
+    window.fetch = function(...args) {
+        console.log('📡 Fetch request:', args[0]);
+        return originalFetch.apply(this, arguments)
+            .then(response => {
+                console.log('📡 Fetch response:', response.status, response.url);
+                return response;
+            })
+            .catch(error => {
+                console.error('📡 Fetch error:', error);
+                throw error;
+            });
+    };
+    
+    // Debug current authentication state
+    console.log('🔍 Checking current authentication state...');
+    fetch('/debug/config')
+        .then(response => response.json())
+        .then(data => {
+            console.log('👤 Current user:', data.current_user);
+            console.log('🔧 Configuration:', data);
+        })
+        .catch(error => {
+            console.log('⚠️ Could not fetch debug config:', error.message);
+        });
+});
+</script>
+{% endblock %}

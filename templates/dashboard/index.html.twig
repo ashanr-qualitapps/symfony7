@@ -1,0 +1,741 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - Symfony 7 App{% endblock %}
+
+{% block stylesheets %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+<style>
+    .dashboard-card {
+        transition: transform 0.2s ease-in-out;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+    }
+    .welcome-banner {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+    }
+    .chart-container {
+        position: relative;
+    }
+    .progress {
+        transition: all 0.3s ease;
+    }
+    .progress-bar {
+        transition: width 0.5s ease;
+    }
+    #monitor-status {
+        animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container">
+    <!-- Welcome Banner -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card welcome-banner">
+                <div class="card-body text-center py-4">
+                    <h1 class="display-5 fw-bold mb-3">
+                        <i class="bi bi-person-circle me-2"></i>
+                        Welcome, {{ user.firstName ?? user.email }}!
+                    </h1>
+                    <p class="lead mb-0">You are successfully logged in to your dashboard</p>
+                    <small class="opacity-75">
+                        Role: {{ stats.user_role|replace({'ROLE_': ''})|title }} | 
+                        Login Time: {{ "now"|date("F j, Y, g:i a") }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <a href="{{ path('users_list') }}" class="text-decoration-none">
+                <div class="card stat-card dashboard-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-people-fill fs-1 mb-3"></i>
+                        <h3 class="card-title">{{ stats.total_users }}</h3>
+                        <p class="card-text">Total Users</p>
+                        <small class="opacity-75"><i class="bi bi-arrow-right me-1"></i>View All Users</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-person-check-fill fs-1 mb-3"></i>
+                    <h3 class="card-title">{{ stats.active_users }}</h3>
+                    <p class="card-text">Active Users</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ path('product_index') }}" class="text-decoration-none">
+                <div class="card stat-card dashboard-card">
+                    <div class="card-body text-center">
+                        <i class="bi bi-box-seam fs-1 mb-3"></i>
+                        <h3 class="card-title">{{ stats.total_products }}</h3>
+                        <p class="card-text">Total Products</p>
+                        <small class="opacity-75"><i class="bi bi-arrow-right me-1"></i>View All Products</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card dashboard-card">
+                <div class="card-body text-center">
+                    <i class="bi bi-exclamation-triangle fs-1 mb-3"></i>
+                    <h3 class="card-title">{{ stats.low_stock_products }}</h3>
+                    <p class="card-text">Low Stock</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Quick Actions -->
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-lightning-charge me-2"></i>Quick Actions
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{{ path('app_home') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <i class="bi bi-house-door text-primary me-3"></i>
+                            <strong>Home Page</strong>
+                            <small class="text-muted d-block">Return to the main page</small>
+                        </a>
+                        <a href="{{ path('product_index') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <i class="bi bi-box-seam text-info me-3"></i>
+                            <strong>Products</strong>
+                            <small class="text-muted d-block">Browse and manage products</small>
+                        </a>
+                        <a href="{{ path('users_list') }}" class="list-group-item list-group-item-action border-0 py-3">
+                            <i class="bi bi-people text-success me-3"></i>
+                            <strong>Users Directory</strong>
+                            <small class="text-muted d-block">Browse all system users</small>
+                        </a>
+                        {% if is_granted('ROLE_ADMIN') %}
+                            <a href="/admin" class="list-group-item list-group-item-action border-0 py-3">
+                                <i class="bi bi-shield-lock text-warning me-3"></i>
+                                <strong>Admin Area</strong>
+                                <small class="text-muted d-block">Manage system settings</small>
+                            </a>
+                            <a href="{{ path('users_list') }}" class="list-group-item list-group-item-action border-0 py-3">
+                                <i class="bi bi-people-fill text-info me-3"></i>
+                                <strong>User Management</strong>
+                                <small class="text-muted d-block">Advanced user administration</small>
+                            </a>
+                            <a href="{{ path('test_runner_index') }}" class="list-group-item list-group-item-action border-0 py-3">
+                                <i class="bi bi-flask text-primary me-3"></i>
+                                <strong>Test Runner</strong>
+                                <small class="text-muted d-block">Run unit tests and view coverage reports</small>
+                            </a>
+                        {% endif %}
+                        <a href="#" class="list-group-item list-group-item-action border-0 py-3" onclick="updateProfile()">
+                            <i class="bi bi-person-gear text-secondary me-3"></i>
+                            <strong>Profile Settings</strong>
+                            <small class="text-muted d-block">Update your information</small>
+                        </a>
+                        <a href="{{ path('app_logout') }}" class="list-group-item list-group-item-action border-0 py-3 text-danger">
+                            <i class="bi bi-box-arrow-right me-3"></i>
+                            <strong>Logout</strong>
+                            <small class="text-muted d-block">Sign out securely</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- User Information -->
+        <div class="col-md-6 mb-4">
+            <div class="card dashboard-card h-100">
+                <div class="card-header bg-info text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-info-circle me-2"></i>Your Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <strong>Email:</strong><br>
+                                    <span class="text-muted">{{ user.email }}</span>
+                                </div>
+                                <i class="bi bi-envelope-fill text-primary fs-4"></i>
+                            </div>
+                        </div>
+                        {% if user.firstName or user.lastName %}
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <strong>Name:</strong><br>
+                                    <span class="text-muted">{{ user.firstName ?? '' }} {{ user.lastName ?? '' }}</span>
+                                </div>
+                                <i class="bi bi-person-fill text-success fs-4"></i>
+                            </div>
+                        </div>
+                        {% endif %}
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <strong>Account Status:</strong><br>
+                                    <span class="badge bg-{{ user.isActive ? 'success' : 'danger' }}">
+                                        {{ user.isActive ? 'Active' : 'Inactive' }}
+                                    </span>
+                                </div>
+                                <i class="bi bi-{{ user.isActive ? 'check-circle-fill text-success' : 'x-circle-fill text-danger' }} fs-4"></i>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded">
+                                <div>
+                                    <strong>Member Since:</strong><br>
+                                    <span class="text-muted">{{ user.createdAt ? user.createdAt|date("F j, Y") : 'Unknown' }}</span>
+                                </div>
+                                <i class="bi bi-calendar-fill text-primary fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Resource Monitor -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-activity me-2"></i>Live Resource Monitor
+                    </h4>
+                    <div class="d-flex align-items-center">
+                        <span class="badge bg-light text-success me-2" id="monitor-status">
+                            <i class="bi bi-circle-fill text-success"></i> Live
+                        </span>
+                        <button class="btn btn-outline-light btn-sm" onclick="toggleMonitor()" id="monitor-toggle">
+                            <i class="bi bi-pause-fill"></i> Pause
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-primary" id="cpu-progress" style="width: 0%"></div>
+                                </div>
+                                <h6 class="mb-1">CPU Usage</h6>
+                                <span class="text-primary fw-bold" id="cpu-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-warning" id="memory-progress" style="width: 0%"></div>
+                                </div>
+                                <h6 class="mb-1">Memory Usage</h6>
+                                <span class="text-warning fw-bold" id="memory-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-danger" id="disk-progress" style="width: 0%"></div>
+                                </div>
+                                <h6 class="mb-1">Disk Usage</h6>
+                                <span class="text-danger fw-bold" id="disk-value">0%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center p-3 bg-light rounded">
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-info" id="php-memory-progress" style="width: 0%"></div>
+                                </div>
+                                <h6 class="mb-1">PHP Memory</h6>
+                                <span class="text-info fw-bold" id="php-memory-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="cpu-memory-chart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="chart-container" style="height: 250px;">
+                                <canvas id="network-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Details -->
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-server me-2"></i>System Info</h6>
+                                    <div class="row g-2 small">
+                                        <div class="col-6">Load Average:</div>
+                                        <div class="col-6" id="load-avg">-</div>
+                                        <div class="col-6">Active Connections:</div>
+                                        <div class="col-6" id="connections">-</div>
+                                        <div class="col-6">Response Time:</div>
+                                        <div class="col-6" id="response-time">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title"><i class="bi bi-code-square me-2"></i>PHP Info</h6>
+                                    <div class="row g-2 small">
+                                        <div class="col-6">Version:</div>
+                                        <div class="col-6" id="php-version">-</div>
+                                        <div class="col-6">OPcache:</div>
+                                        <div class="col-6" id="opcache-status">-</div>
+                                        <div class="col-6">Extensions:</div>
+                                        <div class="col-6" id="extensions-count">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card dashboard-card">
+                <div class="card-header bg-secondary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-gear-fill me-2"></i>System Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="bi bi-clock text-primary fs-1"></i>
+                                <h6 class="mt-2">Current Time</h6>
+                                <small class="text-muted">{{ "now"|date("g:i:s a") }}</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="bi bi-server text-success fs-1"></i>
+                                <h6 class="mt-2">Environment</h6>
+                                <span class="badge bg-{{ app.environment == 'prod' ? 'success' : 'warning' }}">
+                                    {{ app.environment|upper }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="bi bi-shield-check text-info fs-1"></i>
+                                <h6 class="mt-2">Security</h6>
+                                <small class="text-muted">Authenticated</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="p-3">
+                                <i class="bi bi-graph-up text-warning fs-1"></i>
+                                <h6 class="mt-2">Session</h6>
+                                <small class="text-muted">Active</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Global variables for monitoring
+let monitoringActive = true;
+let monitoringInterval;
+let cpuMemoryChart;
+let networkChart;
+let resourceData = {
+    labels: [],
+    cpu: [],
+    memory: [],
+    network: []
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Log successful dashboard access
+    console.log('✅ Dashboard loaded successfully');
+    console.log('👤 Authenticated user:', '{{ user.email }}');
+    console.log('🔐 User roles:', {{ user.roles|json_encode|raw }});
+    console.log('📍 Current URL:', window.location.href);
+    console.log('🎯 Login was successful - user reached dashboard');
+    
+    // Update time every second
+    updateTime();
+    setInterval(updateTime, 1000);
+    
+    // Add welcome animation
+    setTimeout(() => {
+        document.querySelector('.welcome-banner').style.transform = 'scale(1.02)';
+        setTimeout(() => {
+            document.querySelector('.welcome-banner').style.transform = 'scale(1)';
+        }, 200);
+    }, 500);
+    
+    // Initialize monitoring charts
+    initializeCharts();
+    
+    // Start resource monitoring
+    startResourceMonitoring();
+});
+
+function initializeCharts() {
+    // CPU & Memory Chart
+    const cpuMemoryCtx = document.getElementById('cpu-memory-chart').getContext('2d');
+    cpuMemoryChart = new Chart(cpuMemoryCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'CPU %',
+                data: [],
+                borderColor: 'rgb(54, 162, 235)',
+                backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'Memory %',
+                data: [],
+                borderColor: 'rgb(255, 193, 7)',
+                backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                },
+                x: {
+                    display: false
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'CPU & Memory Usage Over Time'
+                }
+            },
+            animation: {
+                duration: 500
+            }
+        }
+    });
+    
+    // Network Chart
+    const networkCtx = document.getElementById('network-chart').getContext('2d');
+    networkChart = new Chart(networkCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Connections',
+                data: [],
+                borderColor: 'rgb(220, 53, 69)',
+                backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y'
+            }, {
+                label: 'Response Time (ms)',
+                data: [],
+                borderColor: 'rgb(25, 135, 84)',
+                backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: {
+                    display: false
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    title: {
+                        display: true,
+                        text: 'Connections'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    title: {
+                        display: true,
+                        text: 'Response Time (ms)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                }
+            },
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Network Activity'
+                }
+            },
+            animation: {
+                duration: 500
+            }
+        }
+    });
+}
+
+function startResourceMonitoring() {
+    fetchResourceData(); // Initial fetch
+    monitoringInterval = setInterval(fetchResourceData, 3000); // Update every 3 seconds
+}
+
+async function fetchResourceData() {
+    if (!monitoringActive) return;
+    
+    try {
+        const response = await fetch('/api/system/resources', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                console.warn('Authentication required for resource monitoring');
+                updateMonitorStatus('auth_required');
+                return;
+            }
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const data = await response.json();
+        updateResourceDisplay(data);
+        updateCharts(data);
+        updateMonitorStatus('live');
+        
+    } catch (error) {
+        console.error('Error fetching resource data:', error);
+        updateMonitorStatus('error');
+        
+        // Show fallback data for demo purposes
+        const fallbackData = {
+            cpu: { percentage: Math.random() * 50 + 10, load_1min: 0.5, load_5min: 0.3, load_15min: 0.2 },
+            memory: { 
+                php_percentage: Math.random() * 30 + 5, 
+                system_percentage: Math.random() * 60 + 20 
+            },
+            disk: { percentage: Math.random() * 20 + 40 },
+            network: { 
+                connections: Math.floor(Math.random() * 50) + 20, 
+                response_time_avg: Math.floor(Math.random() * 200) + 50 
+            },
+            php: { 
+                version: '{{ constant('PHP_VERSION') }}', 
+                opcache_enabled: true, 
+                extensions_loaded: 25 
+            }
+        };
+        
+        updateResourceDisplay(fallbackData);
+        updateCharts(fallbackData);
+    }
+}
+
+function updateResourceDisplay(data) {
+    // Update progress bars and values
+    document.getElementById('cpu-progress').style.width = data.cpu.percentage + '%';
+    document.getElementById('cpu-value').textContent = data.cpu.percentage + '%';
+    
+    const memoryPercentage = data.memory.system_percentage || data.memory.php_percentage;
+    document.getElementById('memory-progress').style.width = memoryPercentage + '%';
+    document.getElementById('memory-value').textContent = memoryPercentage + '%';
+    
+    document.getElementById('disk-progress').style.width = data.disk.percentage + '%';
+    document.getElementById('disk-value').textContent = data.disk.percentage + '%';
+    
+    document.getElementById('php-memory-progress').style.width = data.memory.php_percentage + '%';
+    document.getElementById('php-memory-value').textContent = data.memory.php_percentage + '%';
+    
+    // Update system details
+    document.getElementById('load-avg').textContent = `${data.cpu.load_1min}, ${data.cpu.load_5min}, ${data.cpu.load_15min}`;
+    document.getElementById('connections').textContent = data.network.connections;
+    document.getElementById('response-time').textContent = data.network.response_time_avg + 'ms';
+    
+    // Update PHP info
+    document.getElementById('php-version').textContent = data.php.version;
+    document.getElementById('opcache-status').innerHTML = data.php.opcache_enabled ? 
+        '<span class="text-success">Enabled</span>' : '<span class="text-warning">Disabled</span>';
+    document.getElementById('extensions-count').textContent = data.php.extensions_loaded;
+}
+
+function updateCharts(data) {
+    const now = new Date();
+    const timeLabel = now.toLocaleTimeString();
+    
+    // Keep only last 20 data points
+    if (resourceData.labels.length >= 20) {
+        resourceData.labels.shift();
+        resourceData.cpu.shift();
+        resourceData.memory.shift();
+        resourceData.network.shift();
+    }
+    
+    resourceData.labels.push(timeLabel);
+    resourceData.cpu.push(data.cpu.percentage);
+    resourceData.memory.push(data.memory.system_percentage || data.memory.php_percentage);
+    resourceData.network.push(data.network.connections);
+    
+    // Update CPU & Memory Chart
+    cpuMemoryChart.data.labels = [...resourceData.labels];
+    cpuMemoryChart.data.datasets[0].data = [...resourceData.cpu];
+    cpuMemoryChart.data.datasets[1].data = [...resourceData.memory];
+    cpuMemoryChart.update('none');
+    
+    // Update Network Chart
+    networkChart.data.labels = [...resourceData.labels];
+    networkChart.data.datasets[0].data = [...resourceData.network];
+    networkChart.data.datasets[1].data = resourceData.labels.map(() => data.network.response_time_avg);
+    networkChart.update('none');
+}
+
+function toggleMonitor() {
+    monitoringActive = !monitoringActive;
+    const button = document.getElementById('monitor-toggle');
+    const status = document.getElementById('monitor-status');
+    
+    if (monitoringActive) {
+        button.innerHTML = '<i class="bi bi-pause-fill"></i> Pause';
+        status.innerHTML = '<i class="bi bi-circle-fill text-success"></i> Live';
+        status.className = 'badge bg-light text-success me-2';
+        startResourceMonitoring();
+    } else {
+        button.innerHTML = '<i class="bi bi-play-fill"></i> Resume';
+        status.innerHTML = '<i class="bi bi-circle-fill text-warning"></i> Paused';
+        status.className = 'badge bg-light text-warning me-2';
+        clearInterval(monitoringInterval);
+    }
+}
+
+function updateMonitorStatus(status) {
+    const statusElement = document.getElementById('monitor-status');
+    switch(status) {
+        case 'live':
+            statusElement.innerHTML = '<i class="bi bi-circle-fill text-success"></i> Live';
+            statusElement.className = 'badge bg-light text-success me-2';
+            break;
+        case 'error':
+            statusElement.innerHTML = '<i class="bi bi-circle-fill text-danger"></i> Error';
+            statusElement.className = 'badge bg-light text-danger me-2';
+            break;
+        case 'auth_required':
+            statusElement.innerHTML = '<i class="bi bi-circle-fill text-warning"></i> Auth Required';
+            statusElement.className = 'badge bg-light text-warning me-2';
+            break;
+        default:
+            statusElement.innerHTML = '<i class="bi bi-circle-fill text-secondary"></i> Unknown';
+            statusElement.className = 'badge bg-light text-secondary me-2';
+    }
+}
+
+function formatBytes(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+function updateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    const timeElement = document.querySelector('.col-md-3:first-child small');
+    if (timeElement) {
+        timeElement.textContent = timeString;
+    }
+}
+
+function updateProfile() {
+    alert('Profile update feature coming soon!');
+}
+
+// Auto-hide success alerts after 5 seconds
+setTimeout(() => {
+    const alerts = document.querySelectorAll('.alert-success');
+    alerts.forEach(alert => {
+        alert.style.transition = 'opacity 0.5s';
+        alert.style.opacity = '0';
+        setTimeout(() => alert.remove(), 500);
+    });
+}, 5000);
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (monitoringInterval) {
+        clearInterval(monitoringInterval);
+    }
+});
+</script>
+{% endblock %}

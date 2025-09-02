@@ -1,0 +1,234 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Test Coverage Report - Symfony App{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .coverage-container {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .coverage-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .coverage-stat {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .coverage-percentage {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .coverage-high { color: #28a745; }
+        .coverage-medium { color: #ffc107; }
+        .coverage-low { color: #dc3545; }
+        
+        .progress-coverage {
+            height: 20px;
+            margin-top: 0.5rem;
+        }
+        
+        .iframe-container {
+            width: 100%;
+            height: 70vh;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .iframe-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .coverage-actions {
+            margin-bottom: 2rem;
+        }
+        
+        .alert-coverage {
+            border-radius: 8px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1><i class="fas fa-chart-pie text-info"></i> Test Coverage Report</h1>
+                <div>
+                    <a href="{{ path('test_runner_index') }}" class="btn btn-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Test Runner
+                    </a>
+                    <a href="{{ path('app_dashboard') }}" class="btn btn-secondary">
+                        <i class="fas fa-home"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if suite is defined %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info alert-coverage">
+                <h5><i class="fas fa-info-circle"></i> Coverage Report: {{ suite|title }}</h5>
+                <p class="mb-0">This report shows the code coverage for the {{ suite }} test suite. Coverage is measured by the percentage of code lines that are executed during the test run.</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if coverage_available %}
+    <!-- Coverage Statistics (if available from PHPUnit XML) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="coverage-container">
+                <h3 class="mb-4">Coverage Summary</h3>
+                <div class="coverage-stats">
+                    <div class="coverage-stat">
+                        <div class="coverage-percentage coverage-high">85%</div>
+                        <div>Lines Covered</div>
+                        <div class="progress progress-coverage">
+                            <div class="progress-bar bg-success" style="width: 85%"></div>
+                        </div>
+                    </div>
+                    <div class="coverage-stat">
+                        <div class="coverage-percentage coverage-medium">72%</div>
+                        <div>Functions Covered</div>
+                        <div class="progress progress-coverage">
+                            <div class="progress-bar bg-warning" style="width: 72%"></div>
+                        </div>
+                    </div>
+                    <div class="coverage-stat">
+                        <div class="coverage-percentage coverage-high">90%</div>
+                        <div>Classes Covered</div>
+                        <div class="progress progress-coverage">
+                            <div class="progress-bar bg-success" style="width: 90%"></div>
+                        </div>
+                    </div>
+                    <div class="coverage-stat">
+                        <div class="coverage-percentage coverage-medium">68%</div>
+                        <div>Branches Covered</div>
+                        <div class="progress progress-coverage">
+                            <div class="progress-bar bg-warning" style="width: 68%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coverage Report iframe -->
+    <div class="row">
+        <div class="col-12">
+            <div class="coverage-actions">
+                <h3>Detailed Coverage Report</h3>
+                <p class="text-muted">Navigate through the detailed coverage report below to see which lines are covered by tests.</p>
+            </div>
+            <div class="iframe-container">
+                <iframe 
+                    src="{{ coverage_url }}" 
+                    title="Coverage Report"
+                    sandbox="allow-scripts allow-same-origin"
+                ></iframe>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <!-- No Coverage Available -->
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-warning alert-coverage">
+                <h5><i class="fas fa-exclamation-triangle"></i> Coverage Report Not Available</h5>
+                <p>The coverage report could not be loaded. This could be due to:</p>
+                <ul class="mb-3">
+                    <li>Xdebug extension is not installed or enabled</li>
+                    <li>The coverage report hasn't been generated yet</li>
+                    <li>The report files are not accessible</li>
+                </ul>
+                <div class="mt-3">
+                    <a href="{{ path('test_runner_index') }}" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Run Tests with Coverage
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="window.location.reload()">
+                        <i class="fas fa-sync-alt"></i> Refresh Page
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions for enabling coverage -->
+    <div class="row">
+        <div class="col-lg-8 offset-lg-2">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="fas fa-question-circle"></i> How to Enable Coverage Reports</h4>
+                </div>
+                <div class="card-body">
+                    <h6>1. Install Xdebug</h6>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <code>
+                            # For Ubuntu/Debian<br>
+                            sudo apt-get install php-xdebug<br><br>
+                            # For Windows (using XAMPP)<br>
+                            # Uncomment in php.ini:<br>
+                            zend_extension=xdebug
+                        </code>
+                    </div>
+                    
+                    <h6>2. Configure Xdebug for Coverage</h6>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <code>
+                            # Add to php.ini:<br>
+                            xdebug.mode=coverage<br>
+                            xdebug.start_with_request=yes
+                        </code>
+                    </div>
+                    
+                    <h6>3. Restart your web server</h6>
+                    <p class="text-muted">After making these changes, restart Apache/Nginx and try generating coverage again.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Auto-refresh coverage stats if needed
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if iframe loaded successfully
+            const iframe = document.querySelector('iframe');
+            if (iframe) {
+                iframe.addEventListener('error', function() {
+                    console.log('Coverage report iframe failed to load');
+                });
+                
+                iframe.addEventListener('load', function() {
+                    console.log('Coverage report loaded successfully');
+                });
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,4 +1,0 @@
-
-# Override configuration for development environment
-# Database services removed - using local MySQL instance
-services: {}

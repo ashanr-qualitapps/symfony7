@@ -1,4 +1,0 @@
-
-# Docker Compose configuration for Symfony application
-# Database services removed - using local MySQL instance
-services: {}

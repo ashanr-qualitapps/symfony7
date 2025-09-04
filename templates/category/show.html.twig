@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+{% block title %}Category Details{% endblock %}
+{% block body %}
+<h1>Category Details</h1>
+<ul>
+    <li><strong>ID:</strong> {{ category.id }}</li>
+    <li><strong>Name:</strong> {{ category.name }}</li>
+    <li><strong>Description:</strong> {{ category.description }}</li>
+</ul>
+<a href="{{ path('category_edit', {'id': category.id}) }}" class="btn btn-warning">Edit</a>
+<a href="{{ path('category_index') }}" class="btn btn-secondary">Back to list</a>
+{% endblock %}

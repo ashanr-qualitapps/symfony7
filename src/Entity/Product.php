@@ -32,6 +32,18 @@ class Product
     #[ORM\ManyToOne(inversedBy: 'products')]
     private ?SubCategory $subCategory = null;
 
+    #[ORM\Column(type: 'datetime_immutable')]
+    private \DateTimeImmutable $createdAt;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $updatedAt = null;
+
+    public function __construct()
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    $this->updatedAt = null;
+    }
+
     public function getId(): ?int
     {
         return $this->id;
@@ -100,6 +112,22 @@ class Product
     public function setSubCategory(?SubCategory $subCategory): static
     {
         $this->subCategory = $subCategory;
+        return $this;
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
+    {
+        return $this->createdAt;
+    }
+
+    public function getUpdatedAt(): ?\DateTimeImmutable
+    {
+        return $this->updatedAt;
+    }
+
+    public function setUpdatedAt(?\DateTimeImmutable $updatedAt): static
+    {
+        $this->updatedAt = $updatedAt;
         return $this;
     }
 }

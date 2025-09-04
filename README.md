@@ -549,5 +549,3 @@ if ($canPublish) {
     $workflow->apply($product, 'publish');
 }
 ```
-
-Refer to the [Symfony Workflow documentation](https://symfony.com/doc/current/workflow.html) for advanced usage.

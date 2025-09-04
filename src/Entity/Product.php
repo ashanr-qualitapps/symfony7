@@ -38,10 +38,23 @@ class Product
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $image = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
-    $this->updatedAt = null;
+        $this->updatedAt = null;
+    }
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): static
+    {
+        $this->image = $image;
+        return $this;
     }
 
     public function getId(): ?int

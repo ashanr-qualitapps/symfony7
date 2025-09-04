@@ -80,10 +80,27 @@ class ProductController extends AbstractController
     #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, Product $product, EntityManagerInterface $entityManager): Response
     {
+        if ($product->getName() === null) {
+            $this->addFlash('error', 'This product has no name and cannot be edited.');
+            return $this->redirectToRoute('product_index');
+        }
         $form = $this->createForm(ProductType::class, $product);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $imageFile = $form->get('image')->getData();
+            if ($imageFile) {
+                $newFilename = uniqid().'.'.$imageFile->guessExtension();
+                try {
+                    $imageFile->move(
+                        $this->getParameter('kernel.project_dir') . '/public/uploads/products',
+                        $newFilename
+                    );
+                    $product->setImage($newFilename);
+                } catch (\Exception $e) {
+                    $this->addFlash('error', 'Image upload failed: ' . $e->getMessage());
+                }
+            }
             try {
                 $entityManager->flush();
                 $this->addFlash('success', 'Product updated successfully.');

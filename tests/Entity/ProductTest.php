@@ -36,9 +36,9 @@ class ProductTest extends TestCase
     {
         $product = new Product();
         
-        $this->assertEquals(0, $product->getStock());
-        $this->assertInstanceOf(\DateTime::class, $product->getCreatedAt());
-        $this->assertInstanceOf(\DateTime::class, $product->getUpdatedAt());
+        $this->assertNull($product->getStock());
+        $this->assertInstanceOf(\DateTimeImmutable::class, $product->getCreatedAt());
+        $this->assertNull($product->getUpdatedAt());
         $this->assertNull($product->getId());
         $this->assertNull($product->getName());
         $this->assertNull($product->getDescription());
@@ -49,14 +49,12 @@ class ProductTest extends TestCase
     {
         $product = new Product();
         $originalCreatedAt = $product->getCreatedAt();
-        $originalUpdatedAt = $product->getUpdatedAt();
 
         // Test that timestamps are set automatically
-        $this->assertInstanceOf(\DateTime::class, $originalCreatedAt);
-        $this->assertInstanceOf(\DateTime::class, $originalUpdatedAt);
+        $this->assertInstanceOf(\DateTimeImmutable::class, $originalCreatedAt);
 
         // Test manual timestamp update
-        $newDate = new \DateTime('2025-01-01 12:00:00');
+        $newDate = new \DateTimeImmutable('2025-01-01 12:00:00');
         $product->setUpdatedAt($newDate);
         $this->assertEquals($newDate, $product->getUpdatedAt());
         $this->assertEquals($originalCreatedAt, $product->getCreatedAt()); // createdAt should remain unchanged

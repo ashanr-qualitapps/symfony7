@@ -14,7 +14,7 @@ class ProductType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
-        $builder
+    $builder
             ->add('name', null, [
                 'label' => 'Product Name',
                 'constraints' => [
@@ -51,6 +51,12 @@ class ProductType extends AbstractType
                 'choice_label' => 'name',
                 'required' => false,
                 'placeholder' => 'Select a subcategory (optional)',
+            ])
+            ->add('image', \Symfony\Component\Form\Extension\Core\Type\FileType::class, [
+                'label' => 'Product Image',
+                'mapped' => false,
+                'required' => false,
+                'attr' => ['accept' => 'image/*'],
             ])
         ;
     }

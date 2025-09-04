@@ -85,6 +85,13 @@
                             {{ form_widget(form.subCategory, {'attr': {'class': 'form-select'}}) }}
                             {{ form_errors(form.subCategory) }}
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                <i class="bi bi-image me-1"></i>Product Image
+                            </label>
+                            {{ form_widget(form.image, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.image) }}
+                        </div>
                         <hr>
                         <div class="d-flex gap-2">
                             <button type="submit" class="btn btn-success w-100">

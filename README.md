@@ -507,3 +507,47 @@ php bin/phpunit
 ## License
 
 This project is proprietary software.
+
+## Workflow Component
+
+This project uses the Symfony Workflow component to manage state transitions for entities (e.g., Product).
+
+### Configuration
+
+The workflow is defined in `config/packages/workflow.yaml`:
+
+```yaml
+framework:
+    workflows:
+        sample_process:
+            type: 'state_machine'
+            supports:
+                - App\Entity\Product
+            places:
+                - draft
+                - review
+                - published
+            transitions:
+                to_review:
+                    from: draft
+                    to: review
+                publish:
+                    from: review
+                    to: published
+```
+
+### Usage Example
+
+You can use the workflow service in your code:
+
+```php
+use Symfony\Component\Workflow\WorkflowInterface;
+
+// Inject WorkflowInterface $workflow (for 'sample_process')
+$canPublish = $workflow->can($product, 'publish');
+if ($canPublish) {
+    $workflow->apply($product, 'publish');
+}
+```
+
+Refer to the [Symfony Workflow documentation](https://symfony.com/doc/current/workflow.html) for advanced usage.

@@ -1,0 +1,17 @@
+framework:
+    workflows:
+        sample_process:
+            type: 'state_machine'
+            supports:
+                - App\Entity\Product
+            places:
+                - draft
+                - review
+                - published
+            transitions:
+                to_review:
+                    from: draft
+                    to: review
+                publish:
+                    from: review
+                    to: published

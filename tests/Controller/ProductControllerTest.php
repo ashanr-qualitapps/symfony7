@@ -3,8 +3,10 @@
 namespace App\Tests\Controller;
 
 use App\Entity\Product;
+use App\Entity\Category;
 use App\Entity\User;
 use App\Repository\ProductRepository;
+use App\Repository\CategoryRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Tools\SchemaTool;
@@ -14,52 +16,61 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class ProductControllerTest extends WebTestCase
 {
+    // Removed duplicate setUp method
     private $client;
     private EntityManagerInterface $entityManager;
     private ProductRepository $productRepository;
+    private CategoryRepository $categoryRepository;
     private UserRepository $userRepository;
     private UserPasswordHasherInterface $passwordHasher;
 
     protected function setUp(): void
     {
         $this->client = static::createClient();
-        
-        // Get services from the container
-        $container = static::getContainer();
-        $this->entityManager = $container->get(EntityManagerInterface::class);
+        $container = $this->client->getContainer();
+        $entityManager = $container->get(EntityManagerInterface::class);
+        $schemaTool = new SchemaTool($entityManager);
+        $metadata = $entityManager->getMetadataFactory()->getAllMetadata();
+        if (empty($metadata)) {
+            throw new \RuntimeException('No entity metadata found.');
+        }
+        try {
+            $schemaTool->dropDatabase();
+            $schemaTool->createSchema($metadata);
+        } catch (\Exception $e) {
+            fwrite(STDERR, "Database setup error: " . $e->getMessage() . "\n");
+            throw $e;
+        }
+        $this->entityManager = $entityManager;
         $this->productRepository = $container->get(ProductRepository::class);
+        $this->categoryRepository = $container->get(CategoryRepository::class);
         $this->userRepository = $container->get(UserRepository::class);
         $this->passwordHasher = $container->get(UserPasswordHasherInterface::class);
-
-        // Create database schema for testing
-        $this->setupDatabase();
-        
-        // Clean up any existing test data
-        $this->cleanUpTestData();
     }
 
     protected function tearDown(): void
     {
-        $this->cleanUpTestData();
+        if ($this->entityManager) {
+            $this->cleanUpTestData();
+            $this->entityManager->close();
+        }
         parent::tearDown();
     }
 
-    private function setupDatabase(): void
-    {
-        $schemaTool = new SchemaTool($this->entityManager);
-        $metadata = $this->entityManager->getMetadataFactory()->getAllMetadata();
-        
-        // Drop and create schema
-        $schemaTool->dropSchema($metadata);
-        $schemaTool->createSchema($metadata);
-    }
+    // ...existing code...
 
     private function cleanUpTestData(): void
     {
-        // Clean up products
+        // Clean up products first (due to foreign key constraint)
         $products = $this->productRepository->findAll();
         foreach ($products as $product) {
             $this->entityManager->remove($product);
+        }
+
+        // Clean up categories
+        $categories = $this->categoryRepository->findAll();
+        foreach ($categories as $category) {
+            $this->entityManager->remove($category);
         }
 
         // Clean up users
@@ -71,13 +82,30 @@ class ProductControllerTest extends WebTestCase
         $this->entityManager->flush();
     }
 
-    private function createTestProduct(string $name = 'Test Product', string $price = '99.99', int $stock = 10): Product
+    private function createTestCategory(string $name = 'Test Category'): Category
     {
+        $category = new Category();
+        $category->setName($name);
+        $category->setDescription('Test category description');
+
+        $this->entityManager->persist($category);
+        $this->entityManager->flush();
+
+        return $category;
+    }
+
+    private function createTestProduct(string $name = 'Test Product', string $price = '99.99', int $stock = 10, ?Category $category = null): Product
+    {
+        if ($category === null) {
+            $category = $this->createTestCategory();
+        }
+        
         $product = new Product();
         $product->setName($name)
                 ->setDescription('Test product description')
                 ->setPrice($price)
-                ->setStock($stock);
+                ->setStock($stock)
+                ->setCategory($category);
 
         $this->entityManager->persist($product);
         $this->entityManager->flush();
@@ -167,13 +195,18 @@ class ProductControllerTest extends WebTestCase
     public function testProductCreation(): void
     {
         $admin = $this->createAdminUser();
+        $category = $this->createTestCategory('Electronics');
+        
         $this->loginUser($admin);
         
         $this->client->request('POST', '/products/new', [
-            'name' => 'New Test Product',
-            'description' => 'A new test product',
-            'price' => '49.99',
-            'stock' => '15'
+            'product' => [
+                'name' => 'New Test Product',
+                'description' => 'A new test product',
+                'price' => '49.99',
+                'stock' => '15',
+                'category' => $category->getId()
+            ]
         ]);
         
         $this->assertResponseRedirects('/products/');
